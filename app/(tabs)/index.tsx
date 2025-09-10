@@ -1,98 +1,101 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
+import {  View, Text,Dimensions } from 'react-native';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import SearchFilter from '@/components/shared/search-filter';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import TabsElements from '@/components/shared/tabs-elements';
+import { useQuery } from 'convex/react';
+import { api } from '@/convex/_generated/api';
+import ColumnDisplay from '@/components/shared/column-display';
+import { Image } from 'expo-image';
+import ModalWindow from '@/components/shared/modal';
+import { useState } from 'react';
+import { Id } from '@/convex/_generated/dataModel';
+import LineDisplay from '@/components/shared/LinearDisplay';
+const {width} = Dimensions.get("screen")
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
+const AucWindow = ({auctionId}:{auctionId?: Id<"auctions">})=>{
+    const auction = useQuery(api.auctions.getAuction,{auctionId})
+    if (!auction) {
+        return
+    }
+    return (
+        <View>
+            <LineDisplay
+                data={auction?.imagesUrl??[]}
+                isLoading={false}
+                keyExtractor={x=>x}
+                renderItem={({it})=>(
+                    <Image
+                        source={{uri:it}}
+                        style={{width:width*.8,marginHorizontal:10,marginVertical:10, height:300,borderRadius:20}}
+                    />
+                )}
+                loadingItem='advert'
             />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+            <Text style={{color:'#000',fontFamily:'MontserratBold',marginVertical:10, fontSize:30}}>{auction.product.name}</Text>
+            <Text style={{color:'#000',fontFamily:'MontserratBold',marginVertical:10, fontSize:30}}>Start Price:{auction.product.start_price}</Text>
+            
+        </View>
+    )
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+export default function HomeScreen() {
+    const auctions = useQuery(api.auctions.getAllAuctions)
+    const theme = useColorScheme()
+    const [isOpenModal,setIsOpenModal] = useState(false)
+    const toggleModal = ()=>{
+        setIsOpenModal(!isOpenModal)
+        setSelectedAuction(null)
+    }
+    const [selectedAuction,setSelectedAuction] = useState<{auctionId: Id<"auctions">}|null>(null)
+    console.log(auctions)
+    
+    return (
+        <>
+            <ModalWindow isVisible={isOpenModal} isDarkMode={theme==='dark'} onClose={toggleModal}>
+                <AucWindow
+                    auctionId={selectedAuction?.auctionId}
+                />
+            </ModalWindow>
+            <ParallaxScrollView headerBackgroundColor={{ light: 'red', dark: '#1D3D47' }} >
+                <SearchFilter 
+                    callBackText={()=>{}}
+                    isDarkMode={theme==='dark'}
+                    additionalContainerStyle={{marginTop: 50}}
+                    placeholder='Search auctions'
+                    onPress={()=>{}}
+                    conditions={[]}
+                    title="All Auctions"
+                />
+                <TabsElements
+                    activeTab={''}
+                    isDarkMode={theme==='dark'}
+                    tabElements={[
+                        {id: '', name:'All',onPress:()=>{}},
+                        {id: 'played', name:'Live Auctions',onPress:()=>{}},
+                        {id: 'unplayed', name:'Ended Auctions',onPress:()=>{}},
+                    ]}
+                />
+                <ColumnDisplay
+                    data={auctions??[]}
+                    callBackFc={async()=>{}}
+                    isLoading={auctions===undefined}
+                    keyExtractor={it=>it._id}
+                    loadingItem='advert'
+                    renderItem={({it})=>(
+                        <View>
+                            <Text>{it.ownerId}</Text>
+                        </View>
+                    )}
+                    isDarkMode={theme==='dark'}
+                    emptyComponent={
+                        <View style={{alignItems:'center', justifyContent:'center',marginTop:40}}>
+                            <Image style={{height:100,width:100}} source={require('@/assets/images/auction.png')} />
+                            <Text style={{textAlign:'center'}}>No auctions</Text>
+                        </View>
+                    }
+                />
+            </ParallaxScrollView>
+        </>
+    );
+}
