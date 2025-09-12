@@ -14,7 +14,7 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 const HEADER_HEIGHT = 250;
 
 type Props = PropsWithChildren<{
-  headerImage: ReactElement;
+  headerImage?: ReactElement;
   headerBackgroundColor: { dark: string; light: string };
 }>;
 
@@ -52,7 +52,7 @@ export default function ParallaxScrollView({
       <Animated.View
         style={[
           styles.header,
-          { backgroundColor: headerBackgroundColor[colorScheme] },
+          { backgroundColor: headerBackgroundColor[colorScheme], },
           headerAnimatedStyle,
         ]}>
         {headerImage}
@@ -67,12 +67,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: HEADER_HEIGHT,
+    // height: HEADER_HEIGHT,
     overflow: 'hidden',
   },
   content: {
     flex: 1,
-    padding: 32,
+    padding: 12,
     gap: 16,
     overflow: 'hidden',
   },
